@@ -7,6 +7,8 @@ import time
 
 is_running = False
 primary_color = "#DF282F"
+dark_grey = "#252525"
+text_color = "#ddd"
 interval = 200
 
 
@@ -63,11 +65,11 @@ frame.grid(row=0, column=0, padx=14, pady=14, sticky="nwe")
 frame.columnconfigure(0, weight=1)
 frame.grid_rowconfigure(3, weight=1)
 
-lbl_ip = CTkLabel(master=frame, text="Yeelight IP")
+lbl_ip = CTkLabel(master=frame, text="Yeelight IP", text_color=text_color)
 lbl_ip.grid(row=0, column=0, sticky="w")
 
-input_ip = CTkEntry(frame, border_color="#353535")
-input_ip.grid(row=1, column=0, sticky="ew", columnspan=2)
+input_ip = CTkEntry(frame, border_color=dark_grey, fg_color=dark_grey, text_color="#ccc")
+input_ip.grid(row=1, column=0, sticky="ew", columnspan=2, pady=(0, 8))
 
 brightness = StringVar()
 interval = StringVar()
@@ -90,33 +92,33 @@ def handle_transition(val):
     transition.set(str(int(val)) + " ms")
 
 
-lbl_brightness = CTkLabel(frame, text="Brightness", text_color="white", fg_color="transparent")
+lbl_brightness = CTkLabel(frame, text="Brightness", text_color=text_color, fg_color="transparent")
 lbl_brightness.grid(row=2, column=0, sticky="w")
 
 slider_brightness = CTkSlider(frame, progress_color=primary_color, command=handle_brightness,
-                              button_color=primary_color, hover=False, from_=1, to=100)
+                              button_color=primary_color, hover=False, from_=1, to=100, fg_color=dark_grey)
 slider_brightness.set(40)
-slider_brightness.grid(row=3, column=0, sticky="ew", columnspan=2)
+slider_brightness.grid(row=3, column=0, sticky="ew", columnspan=2, pady=(0, 8))
 
-value_brightness = CTkLabel(frame, textvariable=brightness, width=36, text_color="#808080")
+value_brightness = CTkLabel(frame, textvariable=brightness, width=26, text_color="#808080")
 value_brightness.grid(row=2, column=1, sticky="e")
 
-lbl_interval = CTkLabel(frame, text="Interval", text_color="white", fg_color="transparent")
+lbl_interval = CTkLabel(frame, text="Interval", text_color=text_color, fg_color="transparent")
 lbl_interval.grid(row=4, column=0, sticky="w")
 
 slider_interval = CTkSlider(frame, progress_color=primary_color, command=handle_interval, button_color=primary_color, hover=False, from_=100,
-                            to=1000)
+                            to=1000, fg_color=dark_grey)
 slider_interval.set(200)
-slider_interval.grid(row=5, column=0, sticky="ew", columnspan=2)
+slider_interval.grid(row=5, column=0, sticky="ew", columnspan=2, pady=(0, 8))
 
 value_interval = CTkLabel(frame, textvariable=interval, width=50, text_color="#808080")
 value_interval.grid(row=4, column=1, sticky="e")
 
-lbl_transition = CTkLabel(frame, text="Transition Duration", text_color="white", fg_color="transparent")
+lbl_transition = CTkLabel(frame, text="Transition Duration", text_color=text_color, fg_color="transparent")
 lbl_transition.grid(row=6, column=0, sticky="w")
 
 slider_transition = CTkSlider(frame, progress_color=primary_color, command=handle_transition, button_color=primary_color, hover=False, from_=100,
-                              to=1000)
+                              to=1000, fg_color=dark_grey)
 slider_transition.set(200)
 slider_transition.grid(row=7, column=0, sticky="ew", columnspan=2)
 
