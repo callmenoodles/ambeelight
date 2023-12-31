@@ -1,3 +1,4 @@
+import yeelight.main
 from customtkinter import *
 from yeelight import Bulb
 from functools import partial
@@ -14,7 +15,6 @@ interval = 200
 
 def toggle():
     global is_running
-    global bulb
     global interval
 
     ip = input_ip.get()
@@ -23,14 +23,20 @@ def toggle():
     transition_duration = slider_transition.get()
 
     if not is_running:
-        is_running = True
-        bulb = Bulb(ip, duration=transition_duration)
-        bulb.turn_on()
-        bulb.set_brightness(brightness)
-        bulb.start_music()
+        try:
+            bulb = Bulb(ip, duration=int(transition_duration))
+            ip_err.set("")
+            is_running = True
 
-        btn_power.configure(fg_color="green")
-        run(bulb)
+            bulb.turn_on()
+            bulb.set_brightness(int(brightness))
+            bulb.start_music()
+
+            btn_power.configure(fg_color="green")
+            run(bulb)
+        except yeelight.main.BulbException:
+            ip_err.set("Failed to Connect (VPN?)")
+            input_ip.focus()
     else:
         btn_power.configure(fg_color=primary_color)
         is_running = False
@@ -51,7 +57,6 @@ def run(bulb):
             app.after(interval, partial(run, bulb))
 
 
-# TODO: https://customtkinter.tomschimansky.com/tutorial/frames#using-classes
 app = CTk()
 app.title("Ambeelight")
 app.geometry("280x400")
@@ -67,6 +72,10 @@ frame.grid_rowconfigure(3, weight=1)
 
 lbl_ip = CTkLabel(master=frame, text="Yeelight IP", text_color=text_color)
 lbl_ip.grid(row=0, column=0, sticky="w")
+
+ip_err = StringVar()
+lbl_ip_err = CTkLabel(master=frame, text_color="red", textvariable=ip_err)
+lbl_ip_err.grid(row=0, column=1, sticky="e")
 
 input_ip = CTkEntry(frame, border_color=dark_grey, fg_color=dark_grey, text_color="#ccc")
 input_ip.grid(row=1, column=0, sticky="ew", columnspan=2, pady=(0, 8))
@@ -106,7 +115,8 @@ value_brightness.grid(row=2, column=1, sticky="e")
 lbl_interval = CTkLabel(frame, text="Interval", text_color=text_color, fg_color="transparent")
 lbl_interval.grid(row=4, column=0, sticky="w")
 
-slider_interval = CTkSlider(frame, progress_color=primary_color, command=handle_interval, button_color=primary_color, hover=False, from_=100,
+slider_interval = CTkSlider(frame, progress_color=primary_color, command=handle_interval, button_color=primary_color,
+                            hover=False, from_=100,
                             to=1000, fg_color=dark_grey)
 slider_interval.set(200)
 slider_interval.grid(row=5, column=0, sticky="ew", columnspan=2, pady=(0, 8))
@@ -117,7 +127,8 @@ value_interval.grid(row=4, column=1, sticky="e")
 lbl_transition = CTkLabel(frame, text="Transition Duration", text_color=text_color, fg_color="transparent")
 lbl_transition.grid(row=6, column=0, sticky="w")
 
-slider_transition = CTkSlider(frame, progress_color=primary_color, command=handle_transition, button_color=primary_color, hover=False, from_=100,
+slider_transition = CTkSlider(frame, progress_color=primary_color, command=handle_transition,
+                              button_color=primary_color, hover=False, from_=100,
                               to=1000, fg_color=dark_grey)
 slider_transition.set(200)
 slider_transition.grid(row=7, column=0, sticky="ew", columnspan=2)
