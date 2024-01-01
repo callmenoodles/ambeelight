@@ -47,7 +47,7 @@ def toggle():
             )
 
             btn_power.configure(fg_color="green")
-            threading.Thread(target=run(bulb)).start()
+            threading.Thread(target=partial(run, bulb)).start()
         except yeelight.main.BulbException:
             ip_err.set("Failed to Connect (VPN?)")
             input_ip.focus()
