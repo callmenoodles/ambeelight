@@ -5,6 +5,7 @@ from yeelight import Bulb
 from functools import partial
 from PIL import Image
 from mss import mss
+from platform import system
 import numpy as np
 import pickle
 import threading
@@ -14,10 +15,17 @@ primary_color = "#DF282F"
 dark_grey = "#252525"
 disabled_color = "#505050"
 text_color = "#ddd"
-path_in_appdata = os.path.join(os.getenv("APPDATA"), "ambeelight")
 
-if not os.path.exists(path_in_appdata):
-    os.makedirs(path_in_appdata)
+if system() == "Windows":
+    data_path = os.path.join(os.getenv("APPDATA"), "Ambeelight")
+elif system() == "Linux":
+    data_path = os.path.expanduser("~/.ambeelight")
+elif system() == "Darwin":
+    print("TODO")
+
+
+if not os.path.exists(data_path):
+    os.makedirs(data_path)
 
 
 def toggle():
@@ -38,7 +46,7 @@ def toggle():
                 "brightness": int(brightness),
                 "interval": int(interval),
                 "transition": int(transition_duration)
-            }, open(os.path.join(path_in_appdata, "prefs.dat"), "wb"))
+            }, open(os.path.join(data_path, "prefs"), "wb"))
 
             bulb.turn_on()
             bulb.set_brightness(int(brightness))
@@ -115,7 +123,7 @@ ip_strvar = StringVar()
 ip_strvar.trace_add("write", handle_err)
 
 try:
-    data = pickle.load(open(os.path.join(path_in_appdata, "prefs.dat"), "rb"))
+    data = pickle.load(open(os.path.join(data_path, "prefs"), "rb"))
     ip_strvar.set(data["ip"])
 except FileNotFoundError:
     ip_strvar.set("")
