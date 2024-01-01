@@ -78,7 +78,14 @@ ip_err = StringVar()
 lbl_ip_err = CTkLabel(master=frame, text_color="red", textvariable=ip_err)
 lbl_ip_err.grid(row=0, column=1, sticky="e")
 
-input_ip = CTkEntry(frame, border_color=dark_grey, fg_color=dark_grey, text_color="#ccc")
+# Takes 3 arguments but I don't know what x and y represent
+def handle_err(x,y,mode):
+    ip_err.set("")
+
+ip_strvar = StringVar()
+ip_strvar.trace_add("write", handle_err)
+input_ip = CTkEntry(frame, textvariable=ip_strvar, border_color=dark_grey, fg_color=dark_grey, text_color="#ccc")
+input_ip.bind(command=handle_err)
 input_ip.grid(row=1, column=0, sticky="ew", columnspan=2, pady=(0, 8))
 
 brightness = StringVar()
