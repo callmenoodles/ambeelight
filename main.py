@@ -6,6 +6,7 @@ from mss import mss
 import numpy as np
 import time
 from PIL import Image
+import pickle
 
 is_running = False
 primary_color = "#DF282F"
@@ -28,6 +29,7 @@ def toggle():
             bulb = Bulb(ip, duration=int(transition_duration))
             ip_err.set("")
             is_running = True
+            pickle.dump(ip, open("data", "wb"))
 
             bulb.turn_on()
             bulb.set_brightness(int(brightness))
@@ -75,15 +77,23 @@ lbl_ip = CTkLabel(master=frame, text="Yeelight IP", text_color=text_color)
 lbl_ip.grid(row=0, column=0, sticky="w")
 
 ip_err = StringVar()
-lbl_ip_err = CTkLabel(master=frame, text_color="red", textvariable=ip_err)
+lbl_ip_err = CTkLabel(master=frame, text_color=primary_color, textvariable=ip_err)
 lbl_ip_err.grid(row=0, column=1, sticky="e")
 
+
 # Takes 3 arguments but I don't know what x and y represent
-def handle_err(x,y,mode):
+def handle_err(x, y, mode):
     ip_err.set("")
+
 
 ip_strvar = StringVar()
 ip_strvar.trace_add("write", handle_err)
+
+try:
+    ip_strvar.set(pickle.load(open("data", "rb")))
+except FileNotFoundError:
+    ip_strvar.set("")
+
 input_ip = CTkEntry(frame, textvariable=ip_strvar, border_color=dark_grey, fg_color=dark_grey, text_color="#ccc")
 input_ip.bind(command=handle_err)
 input_ip.grid(row=1, column=0, sticky="ew", columnspan=2, pady=(0, 8))
