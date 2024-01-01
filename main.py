@@ -27,15 +27,8 @@ def toggle():
     if not is_running:
         try:
             bulb = Bulb(ip, duration=int(transition_duration))
-
-            ip_err.set("")
-            slider_transition.configure(
-                state="disabled",
-                progress_color=disabled_color,
-                button_color=disabled_color
-            )
-
             is_running = True
+
             pickle.dump({
                 "ip": ip,
                 "brightness": int(brightness),
@@ -46,6 +39,12 @@ def toggle():
             bulb.turn_on()
             bulb.set_brightness(int(brightness))
             bulb.start_music()
+
+            slider_transition.configure(
+                state="disabled",
+                progress_color=disabled_color,
+                button_color=disabled_color
+            )
 
             btn_power.configure(fg_color="green")
             threading.Thread(target=run(bulb)).start()
@@ -83,8 +82,11 @@ app = CTk()
 app.title("Ambeelight")
 app.geometry("280x400")
 app.configure(fg_color="#101010")
-icon = tkinter.PhotoImage(file="res/icon.png")
+
+icon = tkinter.PhotoImage(file=os.path.join("res", "icon.png"))
+app.wm_iconbitmap()
 app.wm_iconphoto(False, icon)
+
 set_appearance_mode("dark")
 app.grid_columnconfigure(0, weight=1)
 app.grid_rowconfigure(0, weight=1)

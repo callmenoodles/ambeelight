@@ -3,7 +3,7 @@ Ambeelight is a cross-platform (Windows, Linux, macOS) ambient light solution fo
 
 ## Create Installation
 ```commandline
-pyinstaller main.py -n ambeelight -w -D --hidden-import='PIL._tkinter_finder'
+pyinstaller main.py -n ambeelight -w -D --hidden-import='PIL._tkinter_finder' --icon=res/icon.ico
 ```
 
 ## Troubleshooting
