@@ -12,13 +12,12 @@ import threading
 is_running = False
 primary_color = "#DF282F"
 dark_grey = "#252525"
+disabled_color = "#505050"
 text_color = "#ddd"
-interval = 200
 
 
 def toggle():
     global is_running
-    global interval
 
     ip = input_ip.get()
     brightness = slider_brightness.get()
@@ -28,7 +27,14 @@ def toggle():
     if not is_running:
         try:
             bulb = Bulb(ip, duration=int(transition_duration))
+
             ip_err.set("")
+            slider_transition.configure(
+                state="disabled",
+                progress_color=disabled_color,
+                button_color=disabled_color
+            )
+
             is_running = True
             pickle.dump({
                 "ip": ip,
@@ -48,12 +54,21 @@ def toggle():
             input_ip.focus()
     else:
         btn_power.configure(fg_color=primary_color)
+        slider_transition.configure(
+            state="normal",
+            progress_color=primary_color,
+            button_color=primary_color
+        )
+
         is_running = False
 
 
 def run(bulb):
     with mss() as sct:  # Prevents crash
         if is_running:
+            if bulb.get_properties()["current_brightness"] != str(int(slider_brightness.get())):
+                bulb.set_brightness(int(slider_brightness.get()))
+
             display = sct.monitors[1]
             screen = sct.grab(display)
             screen2d = np.asarray(screen).reshape(-1, 4)
@@ -61,7 +76,7 @@ def run(bulb):
 
             bulb.set_rgb(avg_pixel[2], avg_pixel[1], avg_pixel[0])
 
-            app.after(interval, partial(run, bulb))
+            app.after(int(slider_interval.get()), partial(run, bulb))
 
 
 app = CTk()
@@ -87,7 +102,7 @@ lbl_ip_err = CTkLabel(master=frame, text_color=primary_color, textvariable=ip_er
 lbl_ip_err.grid(row=0, column=1, sticky="e")
 
 
-# Takes 3 arguments but I don't know what x and y represent
+# Takes 3 arguments, but I don't know what x and y represent
 def handle_err(x, y, mode):
     ip_err.set("")
 
@@ -144,7 +159,8 @@ lbl_brightness = CTkLabel(frame, text="Brightness", text_color=text_color, fg_co
 lbl_brightness.grid(row=2, column=0, sticky="w")
 
 slider_brightness = CTkSlider(frame, progress_color=primary_color, command=handle_brightness,
-                              button_color=primary_color, hover=False, from_=1, to=100, fg_color=dark_grey)
+                              button_color=primary_color, hover=False, from_=1, to=100, fg_color=dark_grey,
+                              number_of_steps=20)
 slider_brightness.set(int(brightness.get()))
 slider_brightness.grid(row=3, column=0, sticky="ew", columnspan=2, pady=(0, 8))
 
@@ -156,7 +172,7 @@ lbl_interval.grid(row=4, column=0, sticky="w")
 
 slider_interval = CTkSlider(frame, progress_color=primary_color, command=handle_interval, button_color=primary_color,
                             hover=False, from_=100,
-                            to=1000, fg_color=dark_grey)
+                            to=1000, fg_color=dark_grey, number_of_steps=90)
 slider_interval.set(int(interval.get()))
 slider_interval.grid(row=5, column=0, sticky="ew", columnspan=2, pady=(0, 8))
 
@@ -169,7 +185,7 @@ lbl_transition.grid(row=6, column=0, sticky="w")
 
 slider_transition = CTkSlider(frame, progress_color=primary_color, command=handle_transition,
                               button_color=primary_color, hover=False, from_=100,
-                              to=1000, fg_color=dark_grey)
+                              to=1000, fg_color=dark_grey, number_of_steps=90)
 slider_transition.set(int(transition.get()))
 slider_transition.grid(row=7, column=0, sticky="ew", columnspan=2)
 
