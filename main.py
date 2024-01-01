@@ -15,14 +15,14 @@ primary_color = "#DF282F"
 dark_grey = "#252525"
 disabled_color = "#505050"
 text_color = "#ddd"
+data_path = ""
 
 if system() == "Windows":
     data_path = os.path.join(os.getenv("APPDATA"), "Ambeelight")
 elif system() == "Linux":
-    data_path = os.path.expanduser("~/.ambeelight")
+    data_path = os.path.expanduser(".ambeelight")
 elif system() == "Darwin":
-    print("TODO")
-
+    data_path = os.path.join(os.path.expanduser(os.path.join("Library", "Application Support")), "ambeelight")
 
 if not os.path.exists(data_path):
     os.makedirs(data_path)
