@@ -2,7 +2,7 @@
 Ambeelight is a cross-platform (Windows, Linux, macOS) ambient light solution for Yeelight. It will update Yeelight devices to display average color of your primary display, creating a nice atmosphere when watching videos or gaming.
 
 ## Create Installation
-Manually put 'res' folder in the output folder with the `.exe`
+Manually put `res` in the output folder with the `.exe` when installing on Windows.
 ```commandline
 pyinstaller main.py -n ambeelight -w -D --hidden-import='PIL._tkinter_finder' -i "res/icon.ico"
 ```

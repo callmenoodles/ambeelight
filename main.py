@@ -25,7 +25,6 @@ def toggle():
     transition_duration = slider_transition.get()
 
     if not is_running:
-
         try:
             bulb = Bulb(ip, duration=int(transition_duration))
             is_running = True
@@ -108,7 +107,6 @@ lbl_ip_err = CTkLabel(master=frame, text_color=primary_color, textvariable=ip_er
 lbl_ip_err.grid(row=0, column=1, sticky="e")
 
 
-# Takes 3 arguments, but I don't know what x and y represent
 def handle_err(x, y, mode):
     ip_err.set("")
 
