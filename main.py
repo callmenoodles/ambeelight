@@ -25,6 +25,7 @@ def toggle():
     transition_duration = slider_transition.get()
 
     if not is_running:
+
         try:
             bulb = Bulb(ip, duration=int(transition_duration))
             is_running = True
@@ -39,6 +40,8 @@ def toggle():
             bulb.turn_on()
             bulb.set_brightness(int(brightness))
             bulb.start_music()
+
+            ip_err.set("")
 
             slider_transition.configure(
                 state="disabled",
@@ -82,6 +85,7 @@ app = CTk()
 app.title("Ambeelight")
 app.geometry("280x400")
 app.configure(fg_color="#101010")
+app.resizable(False, False)
 
 icon = tkinter.PhotoImage(file=os.path.join("res", "icon.png"))
 app.wm_iconbitmap()
@@ -115,7 +119,7 @@ ip_strvar.trace_add("write", handle_err)
 try:
     data = pickle.load(open("data", "rb"))
     ip_strvar.set(data["ip"])
-except KeyError or FileNotFoundError:
+except FileNotFoundError:
     ip_strvar.set("")
 
 input_ip = CTkEntry(frame, textvariable=ip_strvar, border_color=dark_grey, fg_color=dark_grey, text_color="#ccc")
@@ -129,20 +133,20 @@ transition = StringVar()
 try:
     data = pickle.load(open("data", "rb"))
     brightness.set(data["brightness"])
-except KeyError or FileNotFoundError:
+except FileNotFoundError:
     brightness.set("40")
 
 try:
     data = pickle.load(open("data", "rb"))
     interval.set(data["interval"])
-except KeyError or FileNotFoundError:
-    interval.set("200 ms")
+except FileNotFoundError:
+    interval.set("200")
 
 try:
     data = pickle.load(open("data", "rb"))
     transition.set(data["transition"])
-except KeyError or FileNotFoundError:
-    transition.set("200 ms")
+except FileNotFoundError:
+    transition.set("200")
 
 
 def handle_brightness(val):
