@@ -1,3 +1,4 @@
+import os.path
 import tkinter
 import yeelight.main
 from customtkinter import *
@@ -14,6 +15,10 @@ primary_color = "#DF282F"
 dark_grey = "#252525"
 disabled_color = "#505050"
 text_color = "#ddd"
+path_in_appdata = os.path.join(os.getenv("APPDATA"), "ambeelight")
+
+if not os.path.exists(path_in_appdata):
+    os.makedirs(path_in_appdata)
 
 
 def toggle():
@@ -34,7 +39,7 @@ def toggle():
                 "brightness": int(brightness),
                 "interval": int(interval),
                 "transition": int(transition_duration)
-            }, open("data", "wb"))
+            }, open(os.path.join(path_in_appdata, "prefs.dat"), "wb"))
 
             bulb.turn_on()
             bulb.set_brightness(int(brightness))
@@ -115,7 +120,7 @@ ip_strvar = StringVar()
 ip_strvar.trace_add("write", handle_err)
 
 try:
-    data = pickle.load(open("data", "rb"))
+    data = pickle.load(open(os.path.join(path_in_appdata, "prefs.dat"), "rb"))
     ip_strvar.set(data["ip"])
 except FileNotFoundError:
     ip_strvar.set("")
