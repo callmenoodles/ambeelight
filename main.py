@@ -5,6 +5,7 @@ from functools import partial
 from mss import mss
 import numpy as np
 import time
+from PIL import Image
 
 is_running = False
 primary_color = "#DF282F"
@@ -136,8 +137,10 @@ slider_transition.grid(row=7, column=0, sticky="ew", columnspan=2)
 value_transition = CTkLabel(frame, textvariable=transition, width=50, text_color="#808080")
 value_transition.grid(row=6, column=1, sticky="e")
 
-btn_power = CTkButton(app, text="Power", hover=False, corner_radius=0, fg_color=primary_color, height=35,
-                      command=toggle, cursor="hand2")
+icon_power = CTkImage(Image.open("res/power.png"), size=(22, 22))
+
+btn_power = CTkButton(app, text="", hover=False, corner_radius=0, fg_color=primary_color, height=35,
+                      command=toggle, cursor="hand2", image=icon_power)
 btn_power.grid(row=1, column=0, padx=0, pady=0, sticky="ews")
 
 app.mainloop()
