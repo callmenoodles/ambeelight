@@ -1,5 +1,4 @@
 import os.path
-import tkinter
 import yeelight.main
 from customtkinter import *
 from yeelight import Bulb
@@ -90,11 +89,7 @@ app.title("Ambeelight")
 app.geometry("280x400")
 app.configure(fg_color="#101010")
 app.resizable(False, False)
-
-icon = tkinter.PhotoImage(file=os.path.join("res", "icon.png"))
-app.wm_iconbitmap()
-app.wm_iconphoto(False, icon)
-
+app.iconbitmap(default="res/icon.ico")
 set_appearance_mode("dark")
 app.grid_columnconfigure(0, weight=1)
 app.grid_rowconfigure(0, weight=1)
