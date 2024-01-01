@@ -1,14 +1,13 @@
 import tkinter
-
 import yeelight.main
 from customtkinter import *
 from yeelight import Bulb
 from functools import partial
+from PIL import Image
 from mss import mss
 import numpy as np
-import time
-from PIL import Image
 import pickle
+import threading
 
 is_running = False
 primary_color = "#DF282F"
@@ -31,14 +30,19 @@ def toggle():
             bulb = Bulb(ip, duration=int(transition_duration))
             ip_err.set("")
             is_running = True
-            pickle.dump(ip, open("data", "wb"))
+            pickle.dump({
+                "ip": ip,
+                "brightness": int(brightness),
+                "interval": int(interval),
+                "transition": int(transition_duration)
+            }, open("data", "wb"))
 
             bulb.turn_on()
             bulb.set_brightness(int(brightness))
             bulb.start_music()
 
             btn_power.configure(fg_color="green")
-            run(bulb)
+            threading.Thread(target=run(bulb)).start()
         except yeelight.main.BulbException:
             ip_err.set("Failed to Connect (VPN?)")
             input_ip.focus()
@@ -51,13 +55,11 @@ def run(bulb):
     with mss() as sct:  # Prevents crash
         if is_running:
             display = sct.monitors[1]
-
             screen = sct.grab(display)
             screen2d = np.asarray(screen).reshape(-1, 4)
             avg_pixel = list(map(int, np.average(screen2d, axis=-2)))  # BGRA
 
             bulb.set_rgb(avg_pixel[2], avg_pixel[1], avg_pixel[0])
-            time.sleep(interval / 1000 - (time.monotonic()) % interval / 1000)
 
             app.after(interval, partial(run, bulb))
 
@@ -94,8 +96,9 @@ ip_strvar = StringVar()
 ip_strvar.trace_add("write", handle_err)
 
 try:
-    ip_strvar.set(pickle.load(open("data", "rb")))
-except FileNotFoundError:
+    data = pickle.load(open("data", "rb"))
+    ip_strvar.set(data["ip"])
+except KeyError or FileNotFoundError:
     ip_strvar.set("")
 
 input_ip = CTkEntry(frame, textvariable=ip_strvar, border_color=dark_grey, fg_color=dark_grey, text_color="#ccc")
@@ -106,9 +109,23 @@ brightness = StringVar()
 interval = StringVar()
 transition = StringVar()
 
-brightness.set("40")
-interval.set("200 ms")
-transition.set("200 ms")
+try:
+    data = pickle.load(open("data", "rb"))
+    brightness.set(data["brightness"])
+except KeyError or FileNotFoundError:
+    brightness.set("40")
+
+try:
+    data = pickle.load(open("data", "rb"))
+    interval.set(data["interval"])
+except KeyError or FileNotFoundError:
+    interval.set("200 ms")
+
+try:
+    data = pickle.load(open("data", "rb"))
+    transition.set(data["transition"])
+except KeyError or FileNotFoundError:
+    transition.set("200 ms")
 
 
 def handle_brightness(val):
@@ -128,7 +145,7 @@ lbl_brightness.grid(row=2, column=0, sticky="w")
 
 slider_brightness = CTkSlider(frame, progress_color=primary_color, command=handle_brightness,
                               button_color=primary_color, hover=False, from_=1, to=100, fg_color=dark_grey)
-slider_brightness.set(40)
+slider_brightness.set(int(brightness.get()))
 slider_brightness.grid(row=3, column=0, sticky="ew", columnspan=2, pady=(0, 8))
 
 value_brightness = CTkLabel(frame, textvariable=brightness, width=26, text_color="#808080")
@@ -140,11 +157,12 @@ lbl_interval.grid(row=4, column=0, sticky="w")
 slider_interval = CTkSlider(frame, progress_color=primary_color, command=handle_interval, button_color=primary_color,
                             hover=False, from_=100,
                             to=1000, fg_color=dark_grey)
-slider_interval.set(200)
+slider_interval.set(int(interval.get()))
 slider_interval.grid(row=5, column=0, sticky="ew", columnspan=2, pady=(0, 8))
 
 value_interval = CTkLabel(frame, textvariable=interval, width=50, text_color="#808080")
 value_interval.grid(row=4, column=1, sticky="e")
+interval.set(interval.get() + " ms")
 
 lbl_transition = CTkLabel(frame, text="Transition Duration", text_color=text_color, fg_color="transparent")
 lbl_transition.grid(row=6, column=0, sticky="w")
@@ -152,11 +170,12 @@ lbl_transition.grid(row=6, column=0, sticky="w")
 slider_transition = CTkSlider(frame, progress_color=primary_color, command=handle_transition,
                               button_color=primary_color, hover=False, from_=100,
                               to=1000, fg_color=dark_grey)
-slider_transition.set(200)
+slider_transition.set(int(transition.get()))
 slider_transition.grid(row=7, column=0, sticky="ew", columnspan=2)
 
 value_transition = CTkLabel(frame, textvariable=transition, width=50, text_color="#808080")
 value_transition.grid(row=6, column=1, sticky="e")
+transition.set(transition.get() + " ms")
 
 icon_power = CTkImage(Image.open("res/power.png"), size=(22, 22))
 
