@@ -1,5 +1,6 @@
 import os.path
 import yeelight.main
+import tkinter
 from customtkinter import *
 from yeelight import Bulb
 from functools import partial
@@ -22,7 +23,7 @@ if system() == "Windows":
 elif system() == "Linux":
     data_path = os.path.expanduser(".ambeelight")
 elif system() == "Darwin":
-    data_path = os.path.join(os.path.expanduser(os.path.join("Library", "Application Support")), "ambeelight")
+    data_path = os.path.expanduser(os.path.join("Library", "Application Support", "ambeelight"))
 
 if not os.path.exists(data_path):
     os.makedirs(data_path)
@@ -97,7 +98,11 @@ app.title("Ambeelight")
 app.geometry("280x400")
 app.configure(fg_color="#101010")
 app.resizable(False, False)
-app.iconbitmap(default="res/icon.ico")
+
+icon = tkinter.PhotoImage(file=os.path.join("res", "icon.png"))
+app.wm_iconbitmap()
+app.wm_iconphoto(False, icon)
+
 set_appearance_mode("dark")
 app.grid_columnconfigure(0, weight=1)
 app.grid_rowconfigure(0, weight=1)
