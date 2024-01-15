@@ -11,11 +11,12 @@ import numpy as np
 import pickle
 import threading
 
-is_running = False
 primary_color = "#DF282F"
 dark_grey = "#252525"
 disabled_color = "#505050"
+background_color = "#101010"
 text_color = "#ddd"
+
 data_path = ""
 
 if system() == "Windows":
@@ -27,6 +28,8 @@ elif system() == "Darwin":
 
 if not os.path.exists(data_path):
     os.makedirs(data_path)
+
+is_running = False
 
 
 def toggle_power():
@@ -43,37 +46,27 @@ def toggle_power():
             is_running = True
 
             pickle.dump({
-                "ip": ip,
+                "yeelight_ip": ip,
                 "brightness": int(brightness),
                 "interval": int(interval),
-                "transition": int(transition_duration)
+                "transition_duration": int(transition_duration)
             }, open(os.path.join(data_path, "prefs"), "wb"))
 
             bulb.turn_on()
             bulb.set_brightness(int(brightness))
             bulb.start_music()
 
-            app.input_frame.ip.ip_err.set("")
-
-            app.input_frame.transition.slider.configure(
-                state="disabled",
-                progress_color=disabled_color,
-                button_color=disabled_color
-            )
-
+            app.input_frame.ip.err.set("")
+            app.input_frame.transition.set_disabled(True)
             app.btn_power.configure(fg_color="green")
+
             threading.Thread(target=partial(run, bulb)).start()
         except yeelight.main.BulbException:
-            app.input_frame.ip.ip_err.set("Failed to Connect (VPN?)")
-            app.input_frame.ip.input_ip.focus()
+            app.input_frame.ip.err.set("Failed to Connect (VPN?)")
+            app.input_frame.ip.input.focus()
     else:
         app.btn_power.configure(fg_color=primary_color)
-        app.input_frame.transition.slider.configure(
-            state="normal",
-            progress_color=primary_color,
-            button_color=primary_color
-        )
-
+        app.input_frame.transition.set_disabled(False)
         is_running = False
 
 
@@ -93,70 +86,88 @@ def run(bulb):
             bulb.set_rgb(avg_pixel[2], avg_pixel[1], avg_pixel[0])
 
 
+def to_file_name(s):
+    return s.strip().replace(" ", "_").lower()
+
+
 class TextFrame(CTkFrame):
-    def __init__(self, master):
+    def __init__(self, master, title):
         super().__init__(master)
         self.configure(fg_color="transparent")
 
-        lbl_ip = CTkLabel(self, text="Yeelight IP", text_color=text_color)
-        lbl_ip.grid(row=0, column=0, sticky="w")
+        lbl_title = CTkLabel(self, text=title, text_color=text_color)
+        lbl_title.grid(row=0, column=0, sticky="w")
 
-        self.ip_err = StringVar()
-        lbl_ip_err = CTkLabel(self, text_color=primary_color, textvariable=self.ip_err)
-        lbl_ip_err.grid(row=0, column=1, sticky="e")
+        self.err = StringVar()
+        lbl_err = CTkLabel(self, text_color=primary_color, textvariable=self.err)
+        lbl_err.grid(row=0, column=1, sticky="e")
 
         def handle_err(x, y, mode):
-            self.ip_err.set("")
+            self.err.set("")
 
-        self.ip_strvar = StringVar()
-        self.ip_strvar.trace_add("write", handle_err)
+        self.value = StringVar()
+        self.value.trace_add("write", handle_err)
 
         try:
             data = pickle.load(open(os.path.join(data_path, "prefs"), "rb"))
-            self.ip_strvar.set(data["ip"])
-        except (TypeError, FileNotFoundError):
-            self.ip_strvar.set("")
+            self.value.set(data[to_file_name(title)])
+        except (KeyError, TypeError, FileNotFoundError):
+            self.value.set("")
 
-        self.input_ip = CTkEntry(self, textvariable=self.ip_strvar, border_color=dark_grey, fg_color=dark_grey,
-                                 text_color="#ccc")
-        self.input_ip.bind(command=handle_err)
-        self.input_ip.grid(row=1, column=0, sticky="ew", columnspan=2, pady=(0, 8))
+        self.input = CTkEntry(
+            self, textvariable=self.value, border_color=dark_grey, fg_color=dark_grey, text_color="#ccc")
+        self.input.bind(command=handle_err)
+        self.input.grid(row=1, column=0, sticky="ew", columnspan=2, pady=(0, 8))
 
     def get_value(self):
-        return self.ip_strvar.get()
+        return self.value.get()
 
 
 class SliderFrame(CTkFrame):
     def __init__(self, master, title, minimum, maximum, default, steps, unit):
         super().__init__(master)
-        self.configure(fg_color="transparent")
 
-        self.sv = StringVar()
-        self.sv.set(str(default) + " " + unit)
+        self.configure(fg_color="transparent")
+        self.value = StringVar()
+        self.value.set(str(default) + " " + unit)
 
         try:
             data = pickle.load(open("data", "rb"))
-            self.sv.set(str(data[title.strip().replace(" ", "_").lower()]) + " " + unit)
-        except (KeyError, FileNotFoundError):
-            self.sv.set(str(default) + " " + unit)
+            self.value.set(str(data[to_file_name(title)]) + " " + unit)
+        except (KeyError, TypeError, FileNotFoundError):
+            self.value.set(str(default) + " " + unit)
 
         def handle(val):
-            self.sv.set(str(int(val)) + " " + unit)
+            self.value.set(str(int(val)) + " " + unit)
 
-        label = CTkLabel(self, text=title, text_color=text_color, fg_color="transparent")
-        label.grid(row=2, column=0, sticky="w")
+        lbl_title = CTkLabel(self, text=title, text_color=text_color, fg_color="transparent")
+        lbl_title.grid(row=2, column=0, sticky="w")
 
-        self.slider = CTkSlider(self, progress_color=primary_color, command=handle,
-                                button_color=primary_color, hover=False, from_=minimum, to=maximum, fg_color=dark_grey,
-                                number_of_steps=steps)
-        self.slider.set(int(self.sv.get().split()[0]))
+        lbl_value = CTkLabel(self, textvariable=self.value, text="hello", width=26, text_color="#808080")
+        lbl_value.grid(row=2, column=1, sticky="e")
+
+        self.slider = CTkSlider(
+            self, command=handle, progress_color=primary_color, fg_color=dark_grey, button_color=primary_color,
+            hover=False, from_=minimum, to=maximum, number_of_steps=steps)
+        self.slider.set(int(self.value.get().split()[0]))
         self.slider.grid(row=3, column=0, sticky="ew", columnspan=2, pady=(0, 8))
 
-        value = CTkLabel(self, textvariable=self.sv, text="hello", width=26, text_color="#808080")
-        value.grid(row=2, column=1, sticky="e")
-
     def get_value(self):
-        return int(self.sv.get())
+        return int(self.value.get().split()[0])
+
+    def set_disabled(self, disabled):
+        if disabled:
+            self.slider.configure(
+                state="disabled",
+                progress_color=disabled_color,
+                button_color=disabled_color
+            )
+        else:
+            self.slider.configure(
+                state="normal",
+                progress_color=primary_color,
+                button_color=primary_color
+            )
 
 
 class InputFrame(CTkFrame):
@@ -168,19 +179,22 @@ class InputFrame(CTkFrame):
         self.columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.ip = TextFrame(self)
+        self.ip = TextFrame(self, "Yeelight IP")
         self.ip.columnconfigure(0, weight=1)
         self.ip.grid(row=0, column=0, sticky="ew")
 
-        self.brightness = SliderFrame(self, "Brightness", 1, 100, 40, 20, "")
+        self.brightness = SliderFrame(
+            self, "Brightness", 1, 100, 40, 20, "")
         self.brightness.columnconfigure(0, weight=1)
         self.brightness.grid(row=1, column=0, sticky="ew")
 
-        self.interval = SliderFrame(self, "Interval", 100, 1000, 200, 90, "ms")
+        self.interval = SliderFrame(
+            self, "Interval", 100, 1000, 200, 90, "ms")
         self.interval.columnconfigure(0, weight=1)
         self.interval.grid(row=2, column=0, sticky="ew")
 
-        self.transition = SliderFrame(self, "Transition Duration", 100, 1000, 200, 90,"ms")
+        self.transition = SliderFrame(
+            self, "Transition Duration", 100, 1000, 200, 90, "ms")
         self.transition.columnconfigure(0, weight=1)
         self.transition.grid(row=3, column=0, sticky="ew")
 
@@ -192,7 +206,7 @@ class App(CTk):
         self.title("Ambeelight")
         self.geometry("280x400")
         self.resizable(False, False)
-        self.configure(fg_color="#101010")
+        self.configure(fg_color=background_color)
         set_appearance_mode("dark")
 
         icon = tkinter.PhotoImage(file=os.path.join("res", "icon.png"))
