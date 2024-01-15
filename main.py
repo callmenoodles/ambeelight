@@ -78,8 +78,6 @@ def run_thread(bulb):
 
 
 def run(bulb):
-    print(threading.active_count())
-    print(threading.current_thread())
     with mss() as sct:  # Prevents crash
         if is_running:
             app.after(int(app.input_frame.interval.get_value()), partial(run_thread, bulb))
@@ -199,7 +197,7 @@ class InputFrame(CTkFrame):
         self.interval.grid(row=2, column=0, sticky="ew")
 
         self.transition = SliderFrame(
-            self, "Transition Duration", 100, 1000, 200, 90, "ms")
+            self, "Transition Duration", 0, 1000, 200, 100, "ms")
         self.transition.columnconfigure(0, weight=1)
         self.transition.grid(row=3, column=0, sticky="ew")
 
