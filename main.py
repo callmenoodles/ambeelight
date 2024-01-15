@@ -111,11 +111,10 @@ class TextFrame(CTkFrame):
         self.ip_strvar = StringVar()
         self.ip_strvar.trace_add("write", handle_err)
 
-        # FIXME: Return empty string if None
         try:
             data = pickle.load(open(os.path.join(data_path, "prefs"), "rb"))
             self.ip_strvar.set(data["ip"])
-        except FileNotFoundError:
+        except (TypeError, FileNotFoundError):
             self.ip_strvar.set("")
 
         self.input_ip = CTkEntry(self, textvariable=self.ip_strvar, border_color=dark_grey, fg_color=dark_grey,
@@ -127,22 +126,19 @@ class TextFrame(CTkFrame):
         return self.ip_strvar.get()
 
 
-# TODO: Unit extension
 class SliderFrame(CTkFrame):
-    def __init__(self, master, title, minimum, maximum, default, unit):
+    def __init__(self, master, title, minimum, maximum, default, steps, unit):
         super().__init__(master)
         self.configure(fg_color="transparent")
 
         self.sv = StringVar()
-        self.sv.set(str(default))
+        self.sv.set(str(default) + " " + unit)
 
         try:
             data = pickle.load(open("data", "rb"))
-            self.sv.set(data[title.strip().replace(" ", "_").lower()])
-        except KeyError:
-            self.sv.set(str(default))
-        except FileNotFoundError:
-            self.sv.set(str(default))
+            self.sv.set(str(data[title.strip().replace(" ", "_").lower()]) + " " + unit)
+        except (KeyError, FileNotFoundError):
+            self.sv.set(str(default) + " " + unit)
 
         def handle(val):
             self.sv.set(str(int(val)) + " " + unit)
@@ -152,11 +148,11 @@ class SliderFrame(CTkFrame):
 
         self.slider = CTkSlider(self, progress_color=primary_color, command=handle,
                                 button_color=primary_color, hover=False, from_=minimum, to=maximum, fg_color=dark_grey,
-                                number_of_steps=20)
-        self.slider.set(int(self.sv.get()))
+                                number_of_steps=steps)
+        self.slider.set(int(self.sv.get().split()[0]))
         self.slider.grid(row=3, column=0, sticky="ew", columnspan=2, pady=(0, 8))
 
-        value = CTkLabel(self, textvariable=self.sv, width=26, text_color="#808080")
+        value = CTkLabel(self, textvariable=self.sv, text="hello", width=26, text_color="#808080")
         value.grid(row=2, column=1, sticky="e")
 
     def get_value(self):
@@ -176,15 +172,15 @@ class InputFrame(CTkFrame):
         self.ip.columnconfigure(0, weight=1)
         self.ip.grid(row=0, column=0, sticky="ew")
 
-        self.brightness = SliderFrame(self, "Brightness", 1, 100, 40, "")
+        self.brightness = SliderFrame(self, "Brightness", 1, 100, 40, 20, "")
         self.brightness.columnconfigure(0, weight=1)
         self.brightness.grid(row=1, column=0, sticky="ew")
 
-        self.interval = SliderFrame(self, "Interval", 100, 1000, 200, " ms")
+        self.interval = SliderFrame(self, "Interval", 100, 1000, 200, 90, "ms")
         self.interval.columnconfigure(0, weight=1)
         self.interval.grid(row=2, column=0, sticky="ew")
 
-        self.transition = SliderFrame(self, "Transition Duration", 100, 1000, 200, " ms")
+        self.transition = SliderFrame(self, "Transition Duration", 100, 1000, 200, 90,"ms")
         self.transition.columnconfigure(0, weight=1)
         self.transition.grid(row=3, column=0, sticky="ew")
 
