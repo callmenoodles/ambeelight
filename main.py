@@ -10,6 +10,8 @@ from platform import system
 import numpy as np
 import pickle
 import threading
+import time
+from utils import to_file_name
 
 primary_color = "#DF282F"
 dark_grey = "#252525"
@@ -45,6 +47,7 @@ def toggle_power():
             bulb = Bulb(ip, duration=int(transition_duration))
             is_running = True
 
+            # FIXME: Names are hardcoded
             pickle.dump({
                 "yeelight_ip": ip,
                 "brightness": int(brightness),
@@ -60,7 +63,7 @@ def toggle_power():
             app.input_frame.transition.set_disabled(True)
             app.btn_power.configure(fg_color="green")
 
-            threading.Thread(target=partial(run, bulb)).start()
+            run(bulb)
         except yeelight.main.BulbException:
             app.input_frame.ip.err.set("Failed to Connect (VPN?)")
             app.input_frame.ip.input.focus()
@@ -70,10 +73,16 @@ def toggle_power():
         is_running = False
 
 
+def run_thread(bulb):
+    threading.Thread(target=partial(run, bulb)).start()
+
+
 def run(bulb):
+    print(threading.active_count())
+    print(threading.current_thread())
     with mss() as sct:  # Prevents crash
         if is_running:
-            app.after(int(app.input_frame.interval.get_value()), partial(run, bulb))
+            app.after(int(app.input_frame.interval.get_value()), partial(run_thread, bulb))
 
             if bulb.get_properties()["current_brightness"] != str(int(app.input_frame.brightness.get_value())):
                 bulb.set_brightness(int(app.input_frame.brightness.get_value()))
@@ -81,13 +90,9 @@ def run(bulb):
             display = sct.monitors[1]
             screen = sct.grab(display)
             screen2d = np.asarray(screen).reshape(-1, 4)
-            avg_pixel = list(map(int, np.average(screen2d, axis=-2)))  # BGRA
 
+            avg_pixel = list(map(int, np.mean(screen2d, axis=-2)))  # BGRA
             bulb.set_rgb(avg_pixel[2], avg_pixel[1], avg_pixel[0])
-
-
-def to_file_name(s):
-    return s.strip().replace(" ", "_").lower()
 
 
 class TextFrame(CTkFrame):
