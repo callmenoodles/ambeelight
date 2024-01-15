@@ -1,4 +1,6 @@
 import os.path
+import time
+
 import yeelight.main
 import tkinter
 from customtkinter import *
@@ -10,7 +12,6 @@ from platform import system
 import numpy as np
 import pickle
 import threading
-import time
 from utils import to_file_name
 
 primary_color = "#DF282F"
@@ -44,9 +45,9 @@ def toggle_power():
 
     if not is_running:
         try:
-            bulb = Bulb(ip, duration=int(transition_duration))
+            bulb = Bulb(ip, duration=int(transition_duration), effect="smooth")
             is_running = True
-
+            print(f"Interval {interval}")
             # FIXME: Names are hardcoded
             pickle.dump({
                 "yeelight_ip": ip,
@@ -78,6 +79,7 @@ def run_thread(bulb):
 
 
 def run(bulb):
+    start = time.process_time()
     with mss() as sct:  # Prevents crash
         if is_running:
             app.after(int(app.input_frame.interval.get_value()), partial(run_thread, bulb))
@@ -87,10 +89,11 @@ def run(bulb):
 
             display = sct.monitors[1]
             screen = sct.grab(display)
-            screen2d = np.asarray(screen).reshape(-1, 4)
+            screen2d = np.asarray(screen)[:, :, :3].reshape(-1, 3)  # screen.pixels is very slow
+            avg_pixel = np.mean(screen2d, axis=-2)  # BGR
 
-            avg_pixel = list(map(int, np.mean(screen2d, axis=-2)))  # BGRA
-            bulb.set_rgb(avg_pixel[2], avg_pixel[1], avg_pixel[0])
+            print(time.process_time() - start)
+            bulb.set_rgb(int(avg_pixel[2]), int(avg_pixel[1]), int(avg_pixel[0]))
 
 
 class TextFrame(CTkFrame):
@@ -135,7 +138,8 @@ class SliderFrame(CTkFrame):
         self.value.set(str(default) + " " + unit)
 
         try:
-            data = pickle.load(open("data", "rb"))
+            data = pickle.load(open(os.path.join(data_path, "prefs"), "rb"))
+            print(data)
             self.value.set(str(data[to_file_name(title)]) + " " + unit)
         except (KeyError, TypeError, FileNotFoundError):
             self.value.set(str(default) + " " + unit)
@@ -192,12 +196,12 @@ class InputFrame(CTkFrame):
         self.brightness.grid(row=1, column=0, sticky="ew")
 
         self.interval = SliderFrame(
-            self, "Interval", 100, 1000, 200, 90, "ms")
+            self, "Interval", 80, 1000, 100, 92, "ms")
         self.interval.columnconfigure(0, weight=1)
         self.interval.grid(row=2, column=0, sticky="ew")
 
         self.transition = SliderFrame(
-            self, "Transition Duration", 0, 1000, 200, 100, "ms")
+            self, "Transition Duration", 0, 1000, 250, 100, "ms")
         self.transition.columnconfigure(0, weight=1)
         self.transition.grid(row=3, column=0, sticky="ew")
 
