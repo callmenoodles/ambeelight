@@ -91,11 +91,12 @@ def run(bulb):
             screen = sct.grab(display)
             screen2d = np.asarray(screen)[:, :, :3].reshape(-1, 3)  # screen.pixels is slower
 
-            # FIXME: Causes (noticeable) ~40 ms delay
-            avg_pixel = np.mean(screen2d, axis=-2)  # BGR
-            # print(time.process_time() - start)
+            b = int(screen2d[:, :1].mean())
+            g = int(screen2d[:, 1:2].mean())
+            r = int(screen2d[:, 2:3].mean())
 
-            bulb.set_rgb(int(avg_pixel[2]), int(avg_pixel[1]), int(avg_pixel[0]))
+            print(time.process_time() - start)
+            bulb.set_rgb(r, g, b)
 
 
 class TextFrame(CTkFrame):
