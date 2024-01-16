@@ -79,7 +79,6 @@ def run_thread(bulb):
 
 
 def run(bulb):
-    start = time.process_time()
     with mss() as sct:  # Prevents crash
         if is_running:
             app.after(int(app.input_frame.interval.get_value()), partial(run_thread, bulb))
@@ -95,7 +94,6 @@ def run(bulb):
             g = int(screen2d[:, 1:2].mean())
             r = int(screen2d[:, 2:3].mean())
 
-            print(time.process_time() - start)
             bulb.set_rgb(r, g, b)
 
 
@@ -198,7 +196,7 @@ class InputFrame(CTkFrame):
         self.brightness.grid(row=1, column=0, sticky="ew")
 
         self.interval = SliderFrame(
-            self, "Interval", 80, 1000, 100, 92, "ms")
+            self, "Interval", 50, 500, 100, 45, "ms")
         self.interval.columnconfigure(0, weight=1)
         self.interval.grid(row=2, column=0, sticky="ew")
 
