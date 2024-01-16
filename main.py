@@ -33,10 +33,11 @@ if not os.path.exists(data_path):
     os.makedirs(data_path)
 
 is_running = False
-
+bulb = Bulb
 
 def toggle_power():
     global is_running
+    global bulb
 
     ip = app.input_frame.ip.get_value()
     brightness = app.input_frame.brightness.get_value()
@@ -45,10 +46,18 @@ def toggle_power():
 
     if not is_running:
         try:
-            bulb = Bulb(ip, duration=int(transition_duration), effect="smooth")
+            bulb = Bulb(
+                ip,
+                duration=int(transition_duration),
+                effect="smooth",
+                auto_on=True,
+                power_mode=yeelight.PowerMode.RGB
+            )
+
+            bulb.set_brightness(int(brightness))
+            bulb.start_music()
             is_running = True
 
-            # FIXME: Names are hardcoded
             pickle.dump({
                 "yeelight_ip": ip,
                 "brightness": int(brightness),
@@ -56,15 +65,11 @@ def toggle_power():
                 "transition_duration": int(transition_duration)
             }, open(os.path.join(data_path, "prefs"), "wb"))
 
-            bulb.turn_on()
-            bulb.set_brightness(int(brightness))
-            bulb.start_music()
-
             app.input_frame.ip.err.set("")
             app.input_frame.transition.set_disabled(True)
             app.btn_power.configure(fg_color="green")
 
-            run(bulb)
+            run()
         except yeelight.main.BulbException:
             app.input_frame.ip.err.set("Failed to Connect (VPN?)")
             app.input_frame.ip.input.focus()
@@ -74,21 +79,21 @@ def toggle_power():
         is_running = False
 
 
-def run_thread(bulb):
-    threading.Thread(target=partial(run, bulb)).start()
+def run_thread():
+    threading.Thread(target=run).start()
 
 
-def run(bulb):
+def run():
     with mss() as sct:  # Prevents crash
         if is_running:
-            app.after(int(app.input_frame.interval.get_value()), partial(run_thread, bulb))
+            app.after(int(app.input_frame.interval.get_value()), run_thread)
 
-            if bulb.get_properties()["current_brightness"] != str(int(app.input_frame.brightness.get_value())):
+            if bulb.get_properties()["bright"] != str(int(app.input_frame.brightness.get_value())):
                 bulb.set_brightness(int(app.input_frame.brightness.get_value()))
 
             display = sct.monitors[1]
             screen = sct.grab(display)
-            screen2d = np.asarray(screen)[:, :, :3].reshape(-1, 3)  # screen.pixels is slower
+            screen2d = np.asarray(screen)[:, :, :3].reshape(-1, 3)
 
             b = int(screen2d[:, :1].mean())
             g = int(screen2d[:, 1:2].mean())
@@ -196,7 +201,7 @@ class InputFrame(CTkFrame):
         self.brightness.grid(row=1, column=0, sticky="ew")
 
         self.interval = SliderFrame(
-            self, "Interval", 50, 500, 100, 45, "ms")
+            self, "Interval", 50, 1000, 100, 95, "ms")
         self.interval.columnconfigure(0, weight=1)
         self.interval.grid(row=2, column=0, sticky="ew")
 
