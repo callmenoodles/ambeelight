@@ -2,6 +2,7 @@
 dist/
 output/
 build/
+__pycache__/
 
 *.spec
 data
