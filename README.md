@@ -1,6 +1,9 @@
 # Ambeelight
 Ambeelight is a cross-platform (Windows, Linux, macOS) ambient light solution for Yeelight. It will update Yeelight devices to display average color of your primary display, creating a nice atmosphere when watching videos or gaming.
 
+> [!WARNING]
+> The Yeelight I used to test is no in use anymore. For this reason I archived the project.
+
 ## Create Installation
 Manually put `res` in the output folder with the `.exe` when installing on Windows.
 ```commandline
